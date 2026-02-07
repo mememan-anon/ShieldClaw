@@ -1,8 +1,8 @@
 # ShieldClaw - AI Agent Security Framework
 
-**Status:** 85% Complete | All modules implemented | Testing in progress
+**Status:** ✅ Complete — all modules implemented and tests passing (42/42)
 
-A comprehensive security framework for autonomous AI agents that provides runtime monitoring, skill verification, isolated execution, and prompt injection defense.
+ShieldClaw is a comprehensive security framework for autonomous AI agents providing runtime monitoring, skill verification, isolated execution, prompt injection defense, and Sui integration. The test suite (unit + integration) passes and demos have been validated.
 
 ## 🎯 Mission
 
