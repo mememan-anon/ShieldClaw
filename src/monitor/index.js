@@ -9,13 +9,15 @@
  * - Real-time alerting
  */
 
+import { EventEmitter } from 'events';
 import { BehaviorMonitor } from './monitor.js';
 import { EBPFMonitor } from './ebpf-monitor.js';
 
 export { BehaviorMonitor, EBPFMonitor };
 
-export default class MonitorManager {
+export default class MonitorManager extends EventEmitter {
   constructor(options = {}) {
+    super();
     this.pid = options.pid || process.pid;
     this.options = options;
     

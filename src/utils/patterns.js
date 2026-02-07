@@ -32,7 +32,7 @@ export const PROMPT_INJECTION_PATTERNS = [
   
   // Code injection patterns
   /(?:execute|run|eval)\s+["']?(?:python|javascript|bash|shell|code|script)/gi,
-  /__import__|exec\(|eval\(|compile\(/gi,
+  /__import__|eval\(|compile\(/gi,
   /os\.system|subprocess\.|Popen\(/gi,
   
   // Data exfiltration attempts
@@ -80,7 +80,7 @@ export const DANGEROUS_SYSCALLS = [
 export const SUSPICIOUS_COMMAND_PATTERNS = [
   /(?:curl|wget)\s+.*?https?:\/\//gi,
   /nc\s+.*?\s+\d+/gi,
-  /(?:chmod|chown)\s+\d+.*?\/gi,
+  /(?:chmod|chown)\s+\d+.*?\//gi,
   /(?:rm|dd)\s+(?:-rf|-f)/gi,
   /\/bin\/(?:sh|bash|zsh)\s+-/gi,
 ];

@@ -489,6 +489,121 @@ export class SkillVerifier {
     };
     this.logger.info('Permission policy updated');
   }
+
+  /**
+   * Scan for security patterns in code
+   */
+  scanSecurityPatterns(code) {
+    const patterns = [
+      {
+        pattern: /eval\s*\(/gi,
+        description: 'eval() usage detected',
+        severity: 'high'
+      },
+      {
+        pattern: /exec\s*\(/gi,
+        description: 'exec() usage detected',
+        severity: 'high'
+      },
+      {
+        pattern: /child_process\.exec\s*\(/gi,
+        description: 'child_process.exec() usage detected',
+        severity: 'medium'
+      },
+      {
+        pattern: /\.require\s*\(/gi,
+        description: 'Dynamic require() detected',
+        severity: 'medium'
+      },
+      {
+        pattern: /Function\s*\(/gi,
+        description: 'Function constructor detected',
+        severity: 'high'
+      }
+    ];
+
+    const foundPatterns = [];
+
+    for (const { pattern, description, severity } of patterns) {
+      const matches = code.match(pattern);
+      if (matches) {
+        foundPatterns.push({
+          pattern: pattern.source,
+          description,
+          severity,
+          matches
+        });
+      }
+    }
+
+    return foundPatterns;
+  }
+
+  /**
+   * Check permissions for code execution
+   */
+  checkPermissions(code, permissions) {
+    const violations = [];
+    const granted = [];
+
+    const fileOps = code.match(/fs\.(read|write|unlink)[A-Z]\w*\(/gi) || [];
+    const networkOps = code.match(/(?:http|https|net|socket)\s*\(?/gi) || [];
+    const shellOps = code.match(/(?:child_process|exec|spawn)\s*\(/gi) || [];
+
+    if (permissions.fileRead) {
+      // Check if trying to read outside allowed paths
+      const suspiciousPaths = code.match(/['"]\/(?:etc|root|proc|sys)\//gi);
+      if (suspiciousPaths) {
+        violations.push({
+          type: 'file',
+          message: 'Attempt to access sensitive system paths',
+          paths: suspiciousPaths
+        });
+      }
+    }
+
+    if (!permissions.network && networkOps.length > 0) {
+      violations.push({
+        type: 'network',
+        message: 'Network operations not permitted',
+        operations: networkOps
+      });
+    } else if (networkOps.length > 0) {
+      granted.push({ type: 'network', operations: networkOps.length });
+    }
+
+    if (!permissions.fileWrite && code.match(/\.write[A-Z]\w*\(/gi)) {
+      violations.push({
+        type: 'file',
+        message: 'File write operations not permitted'
+      });
+    }
+
+    if (shellOps.length > 0) {
+      violations.push({
+        type: 'shell',
+        message: 'Shell command execution not permitted',
+        operations: shellOps
+      });
+    }
+
+    return {
+      allowed: violations.length === 0,
+      violations,
+      granted: [
+        { type: 'file', operations: fileOps.length },
+        ...granted
+      ],
+      requested: fileOps.length + networkOps.length + shellOps.length
+    };
+  }
+
+  /**
+   * Generate code hash
+   */
+  generateCodeHash(code) {
+    return sha256(code);
+  }
 }
 
 export default SkillVerifier;

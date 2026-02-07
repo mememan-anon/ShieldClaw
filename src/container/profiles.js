@@ -248,9 +248,18 @@ export class ProfileBuilder {
       }
     }
 
-    // Add to denied list
-    const denyBlock = this.profile.syscalls.find(s => s.action === 'SCMP_ACT_ERRNO');
-    if (denyBlock && !denyBlock.names.includes(syscallName)) {
+    // Add to denied list (create if doesn't exist)
+    let denyBlock = this.profile.syscalls.find(s => s.action === 'SCMP_ACT_ERRNO');
+    if (!denyBlock) {
+      denyBlock = {
+        names: [],
+        action: 'SCMP_ACT_ERRNO',
+        args: []
+      };
+      this.profile.syscalls.push(denyBlock);
+    }
+
+    if (!denyBlock.names.includes(syscallName)) {
       denyBlock.names.push(syscallName);
     }
 

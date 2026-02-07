@@ -7,7 +7,7 @@
  */
 
 import chalk from 'chalk';
-import { MonitorManager } from '../src/monitor/index.js';
+import MonitorManager from '../src/monitor/index.js';
 
 // ASCII Art Banner
 const banner = `
