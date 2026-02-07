@@ -164,15 +164,14 @@
 
 ---
 
-### 8. Testing & Demos (100% Complete)
+### 8. Testing & Demos (COMPLETE)
 
 **Files Created:**
 - `tests/unit.test.js` - Unit tests (352 lines)
 - `tests/integration.test.js` - Integration tests (371 lines)
+- `demos/monitor-demo.js` - Monitor demo (150 lines)
 - `demos/executor-demo.js` - Executor demo (147 lines)
 - `demos/injection-demo.js` - Defense demo (189 lines)
-- `demos/malicious-skill.js` - Malicious detection demo (203 lines)
-- `demos/secure-execution.js` - Full pipeline demo (275 lines)
 
 **Tests Implemented:**
 ✅ 32 unit tests (100% pass rate)
@@ -183,6 +182,8 @@
 ✅ Skill verifier tests
 ✅ Seccomp profile tests
 ✅ End-to-end workflow tests
+
+Note: Demo scenarios consolidated to 3 working demos (monitor, executor, injection); other demo materials were archived to docs/demo-archive/.
 
 ---
 
