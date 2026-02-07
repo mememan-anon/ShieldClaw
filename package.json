@@ -1,0 +1,55 @@
+{
+  "name": "shieldclaw",
+  "version": "0.1.0",
+  "description": "AI Agent Security Framework with runtime monitoring, skill verification, isolated execution, and prompt injection defense",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "monitor:start": "node src/monitor/index.js",
+    "verify:skill": "node src/verify/index.js",
+    "executor:run": "node src/executor/index.js",
+    "defense:test": "node src/defense/index.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node tests/unit.test.js",
+    "test:integration": "node tests/integration.test.js",
+    "test:ebpf": "sudo node tests/ebpf.test.js",
+    "demo:malicious": "node demos/malicious-skill.js",
+    "demo:injection": "node demos/prompt-injection.js",
+    "demo:secure": "node demos/secure-execution.js"
+  },
+  "keywords": [
+    "ai-security",
+    "agent-safety",
+    "runtime-monitoring",
+    "ebpf",
+    "blockchain",
+    "sui",
+    "sandbox"
+  ],
+  "author": "ShieldClaw Security Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcoin": "^2.1.0",
+    "dockerode": "^4.0.2",
+    "express": "^4.18.2",
+    "openai": "^4.28.0",
+    "axios": "^1.6.7",
+    "chalk": "^5.3.0",
+    "yargs": "^17.7.2",
+    "winston": "^3.11.0",
+    "systeminformation": "^5.21.20",
+    "pidusage": "^3.0.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mocha": "^10.3.0",
+    "chai": "^4.4.1",
+    "supertest": "^6.3.4",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

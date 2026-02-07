@@ -1,0 +1,84 @@
+{
+  "version": "1.0.0",
+  "description": "ShieldClaw Security Policy - Defines permissions and security requirements for skill execution",
+  "permissions": {
+    "file": {
+      "read": {
+        "allowed": ["/tmp/*", "/var/tmp/*", "./skills/*", "./config/*"],
+        "description": "Allowed paths for file read operations"
+      },
+      "write": {
+        "allowed": ["/tmp/*", "/var/tmp/*", "./logs/*", "./output/*"],
+        "description": "Allowed paths for file write operations"
+      },
+      "execute": {
+        "allowed": ["./scripts/*", "./bin/*"],
+        "description": "Allowed paths for executable files"
+      }
+    },
+    "network": {
+      "allowList": [
+        "localhost",
+        "127.0.0.1",
+        "api.openai.com",
+        "*.internal",
+        "*.local"
+      ],
+      "blockList": [
+        "malicious-domain.example",
+        "*.malicious"
+      ],
+      "description": "Network access control lists"
+    },
+    "system": {
+      "maxCpu": 80,
+      "maxMemory": 80,
+      "maxDuration": 3600000,
+      "description": "System resource limits"
+    }
+  },
+  "requirements": {
+    "minReputation": 50,
+    "requireSignature": true,
+    "allowUnsigned": false,
+    "verificationLevel": "standard",
+    "description": "Minimum requirements for skill execution"
+  },
+  "security": {
+    "scanPatterns": [
+      {
+        "pattern": "eval\\s*\\(",
+        "severity": "high",
+        "description": "eval() usage detected"
+      },
+      {
+        "pattern": "exec\\s*\\(",
+        "severity": "high",
+        "description": "exec() usage detected"
+      },
+      {
+        "pattern": "child_process\\.exec\\s*\\(",
+        "severity": "medium",
+        "description": "child_process.exec() usage detected"
+      },
+      {
+        "pattern": "\\.require\\s*\\(",
+        "severity": "medium",
+        "description": "Dynamic require() detected"
+      },
+      {
+        "pattern": "Function\\s*\\(",
+        "severity": "high",
+        "description": "Function constructor detected"
+      }
+    ],
+    "description": "Security scanning patterns"
+  },
+  "enforcement": {
+    "strictMode": false,
+    "blockOnFailure": true,
+    "logAllAccess": true,
+    "alertThreshold": 5,
+    "description": "Policy enforcement settings"
+  }
+}
