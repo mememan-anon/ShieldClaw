@@ -43,6 +43,41 @@ let monitorRunning = false;
 const eventLog = [];
 const sseClients = new Set();
 
+function clamp01(value) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function confidenceFromScore(score) {
+  if (score >= 0.75) return 'high';
+  if (score >= 0.45) return 'medium';
+  return 'low';
+}
+
+function mergeThreatDecision(detection, llmResult, threshold) {
+  const localScore = clamp01(detection?.score || 0);
+  const hasLLM = llmResult && !llmResult.error && typeof llmResult.confidence === 'number';
+  const llmThreatScore = hasLLM && llmResult.isMalicious ? clamp01(llmResult.confidence) : 0;
+
+  let score = localScore;
+  if (llmThreatScore > 0) {
+    score = Math.max(
+      localScore,
+      (localScore + llmThreatScore) / 2,
+      llmThreatScore * 0.85
+    );
+  }
+
+  score = clamp01(score);
+  const detected = score >= threshold || llmThreatScore >= 0.85;
+
+  return {
+    score,
+    confidence: confidenceFromScore(score),
+    detected,
+    source: hasLLM ? 'merged' : 'local'
+  };
+}
+
 // Lazy Sui initialization (runs once, reused across warm invocations)
 const suiInitPromise = (async () => {
   try {
@@ -108,24 +143,25 @@ app.post('/api/defense/analyze', async (req, res) => {
     const llmResult = llmAnalyzer.isEnabled()
       ? await llmAnalyzer.analyze(input).catch(e => ({ error: e.message }))
       : null;
+    const decision = mergeThreatDecision(detection, llmResult, detector.threshold);
 
     pushEvent({
       type: 'prompt_analysis',
       timestamp: Date.now(),
       input: input.substring(0, 80),
-      detected: detection.detected,
-      score: detection.score,
+      detected: decision.detected,
+      score: decision.score,
       safe: analysis.safe,
       llm: llmResult ? (llmResult.isMalicious ? 'threat' : 'clean') : 'off'
     });
 
     // Auto-log threats to Sui blockchain
     let chainResult = null;
-    if (detection.detected && suiInitialized) {
+    if (decision.detected && suiInitialized) {
       chainResult = await sui.logSecurityEvent({
         title: 'Prompt Injection Detected',
-        description: `Score: ${detection.score.toFixed(2)}, Patterns: ${detection.patterns.length}, Risks: ${detection.risks.map(r => r.type).join(', ')}`,
-        severity: detection.confidence === 'high' ? 3 : detection.confidence === 'medium' ? 2 : 1,
+        description: `Score: ${decision.score.toFixed(2)}, Patterns: ${detection.patterns.length}, Risks: ${detection.risks.map(r => r.type).join(', ')}`,
+        severity: decision.confidence === 'high' ? 3 : decision.confidence === 'medium' ? 2 : 1,
         eventType: 1,
         source: 'prompt-detector',
         component: 'defense'
@@ -143,7 +179,7 @@ app.post('/api/defense/analyze', async (req, res) => {
       }
     }
 
-    res.json({ detection, analysis, sanitized, llm: llmResult, chain: chainResult });
+    res.json({ detection, decision, analysis, sanitized, llm: llmResult, chain: chainResult });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

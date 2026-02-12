@@ -27,6 +27,7 @@ export default function PromptTester() {
   };
 
   const det = result?.detection;
+  const decision = result?.decision || det;
   const llm = result?.llm;
   const chain = result?.chain;
 
@@ -59,17 +60,20 @@ export default function PromptTester() {
 
       {det && (
         <div className="mt-4 space-y-3">
-          <div className={`p-3 rounded-lg border ${det.detected ? 'bg-red-950/50 border-red-800' : 'bg-emerald-950/50 border-emerald-800'}`}>
+          <div className={`p-3 rounded-lg border ${decision.detected ? 'bg-red-950/50 border-red-800' : 'bg-emerald-950/50 border-emerald-800'}`}>
             <div className="flex justify-between items-center">
-              <span className={`font-bold text-sm ${det.detected ? 'text-red-400' : 'text-emerald-400'}`}>
-                {det.detected ? 'THREAT DETECTED' : 'INPUT SAFE'}
+              <span className={`font-bold text-sm ${decision.detected ? 'text-red-400' : 'text-emerald-400'}`}>
+                {decision.detected ? 'THREAT DETECTED' : 'INPUT SAFE'}
               </span>
               <span className="text-sm font-mono text-gray-300">
-                Score: {(det.score || 0).toFixed(2)}
+                Score: {(decision.score || 0).toFixed(2)}
               </span>
             </div>
             <div className="mt-1 text-xs text-gray-400">
-              Confidence: <span className={`font-medium ${det.confidence === 'high' ? 'text-red-400' : det.confidence === 'medium' ? 'text-amber-400' : 'text-gray-400'}`}>{det.confidence}</span>
+              Confidence: <span className={`font-medium ${decision.confidence === 'high' ? 'text-red-400' : decision.confidence === 'medium' ? 'text-amber-400' : 'text-gray-400'}`}>{decision.confidence}</span>
+              {decision.source === 'merged' && (
+                <span className="ml-2 text-[11px] text-gray-500">(merged local + AI)</span>
+              )}
             </div>
           </div>
 
