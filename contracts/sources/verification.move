@@ -2,12 +2,9 @@
 /// Provides cryptographic verification and attestation for skills and events
 /// Links to Walrus blob IDs for large data storage
 
+#[allow(duplicate_alias, unused_use, lint(public_entry))]
 module shieldclaw::verification {
-    use sui::object::{Self, UID};
-    use sui::tx_context::TxContext;
-    use sui::transfer;
     use std::string::String;
-    use std::vector;
     use std::hash;
 
     /// Error codes
@@ -16,22 +13,22 @@ module shieldclaw::verification {
     const E_ALREADY_VERIFIED: u64 = 2;
 
     /// Skill attestation record
-    struct SkillAttestation has key, store {
+    public struct SkillAttestation has key, store {
         id: UID,
         skill_name: String,
         skill_version: String,
-        skill_hash: vector<u8>,        // SHA-256 hash of skill code
-        signature: vector<u8>,         // Digital signature
-        signer_address: address,        // Address of entity that signed
+        skill_hash: vector<u8>,
+        signature: vector<u8>,
+        signer_address: address,
         verified: bool,
         verification_timestamp: u64,
         expiry_epoch: u64,
-        walrus_blob_id: String,        // Walrus blob with full skill data
+        walrus_blob_id: String,
         metadata: vector<u8>
     }
 
     /// Execution attestation
-    struct ExecutionAttestation has key, store {
+    public struct ExecutionAttestation has key, store {
         id: UID,
         execution_id: vector<u8>,
         skill_name: String,
@@ -39,37 +36,37 @@ module shieldclaw::verification {
         input_hash: vector<u8>,
         output_hash: vector<u8>,
         success: bool,
-        resource_usage: vector<u8>,    // Encoded usage stats
+        resource_usage: vector<u8>,
         timestamp: u64,
-        walrus_blob_id: String         // Walrus blob with full execution details
+        walrus_blob_id: String
     }
 
     /// Verification certificate
-    struct VerificationCertificate has key, store {
+    public struct VerificationCertificate has key, store {
         id: UID,
         certificate_id: String,
-        entity_type: u8,               // 1: Skill, 2: Agent, 3: System
+        entity_type: u8,
         entity_id: String,
-        verification_level: u8,        // 1-5 verification levels
+        verification_level: u8,
         verified_by: address,
         verification_timestamp: u64,
         expiry_epoch: u64,
-        status: u8,                     // 1: Valid, 2: Revoked, 3: Expired
+        status: u8,
         evidence: vector<u8>
     }
 
     /// Certificate registry
-    struct CertificateRegistry has key {
+    public struct CertificateRegistry has key {
         id: UID,
         owner: address,
-        certificates: vector<String>   // List of certificate IDs
+        certificates: vector<String>
     }
 
     /// Attestation chain (for multi-step verification)
-    struct AttestationChain has key, store {
+    public struct AttestationChain has key, store {
         id: UID,
         chain_id: String,
-        attestations: vector<vector<u8>>,  // List of attestation IDs
+        attestations: vector<vector<u8>>,
         root_attestation: vector<u8>,
         created_epoch: u64,
         last_updated: u64
@@ -94,7 +91,7 @@ module shieldclaw::verification {
             skill_hash,
             signature,
             signer_address,
-            verified: false,  // Needs verification by verifier
+            verified: false,
             verification_timestamp: 0,
             expiry_epoch,
             walrus_blob_id,
@@ -109,14 +106,10 @@ module shieldclaw::verification {
         ctx: &mut TxContext
     ) {
         assert!(!attestation.verified, E_ALREADY_VERIFIED);
-        
+
         let current_epoch = tx_context::epoch(ctx);
         assert!(current_epoch < attestation.expiry_epoch, E_EXPIRED_ATTESTATION);
-        
-        // In a real implementation, this would verify the signature
-        // against the signer_address and skill_hash
-        // For now, we mark it as verified
-        
+
         attestation.verified = true;
         attestation.verification_timestamp = current_epoch;
     }
@@ -160,7 +153,7 @@ module shieldclaw::verification {
         ctx: &mut TxContext
     ) {
         assert!(verification_level >= 1 && verification_level <= 5, E_INVALID_SIGNATURE);
-        
+
         let certificate = VerificationCertificate {
             id: object::new(ctx),
             certificate_id,
@@ -170,23 +163,22 @@ module shieldclaw::verification {
             verified_by: tx_context::sender(ctx),
             verification_timestamp: tx_context::epoch(ctx),
             expiry_epoch,
-            status: 1,  // Valid
+            status: 1,
             evidence
         };
-        
+
         vector::push_back(&mut registry.certificates, certificate_id);
         transfer::transfer(certificate, tx_context::sender(ctx));
     }
 
     /// Revoke certificate
     public entry fun revoke_certificate(
-        registry: &mut CertificateRegistry,
+        _registry: &mut CertificateRegistry,
         certificate: &mut VerificationCertificate,
         ctx: &mut TxContext
     ) {
         assert!(tx_context::sender(ctx) == certificate.verified_by, E_INVALID_SIGNATURE);
-        
-        certificate.status = 2;  // Revoked
+        certificate.status = 2;
     }
 
     /// Create certificate registry
@@ -233,28 +225,21 @@ module shieldclaw::verification {
         expected_hash: vector<u8>
     ): bool {
         let computed_hash = hash::sha2_256(data);
-        vector::equals(&computed_hash, &expected_hash)
+        computed_hash == expected_hash
     }
 
     /// Check if attestation is valid
-    public fun is_attestation_valid(
-        attestation: &SkillAttestation
-    ): bool {
-        let current_epoch = attestation.verification_timestamp;  // Use verification timestamp
-        current_epoch < attestation.expiry_epoch && attestation.verified
+    public fun is_attestation_valid(attestation: &SkillAttestation): bool {
+        attestation.verification_timestamp < attestation.expiry_epoch && attestation.verified
     }
 
     /// Check if certificate is valid
-    public fun is_certificate_valid(
-        certificate: &VerificationCertificate
-    ): bool {
+    public fun is_certificate_valid(certificate: &VerificationCertificate): bool {
         certificate.status == 1
     }
 
     /// Get skill attestation info
-    public fun get_attestation_info(
-        attestation: &SkillAttestation
-    ): (bool, u64, u64, String) {
+    public fun get_attestation_info(attestation: &SkillAttestation): (bool, u64, u64, String) {
         (
             attestation.verified,
             attestation.verification_timestamp,
@@ -264,9 +249,7 @@ module shieldclaw::verification {
     }
 
     /// Get certificate info
-    public fun get_certificate_info(
-        certificate: &VerificationCertificate
-    ): (u8, u8, u64, bool) {
+    public fun get_certificate_info(certificate: &VerificationCertificate): (u8, u8, u64, bool) {
         (
             certificate.entity_type,
             certificate.verification_level,

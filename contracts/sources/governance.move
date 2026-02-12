@@ -2,14 +2,9 @@
 /// Manages ShieldClaw governance, policy changes, and admin functions
 /// Supports decentralized governance for security policies
 
+#[allow(duplicate_alias, unused_use, lint(public_entry))]
 module shieldclaw::governance {
-    use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
-    use sui::coin::{Self, Coin};
-    use sui::sui::SUI;
-    use std::string::{Self, String};
-    use std::vector;
+    use std::string::String;
 
     /// Error codes
     const E_NOT_ADMIN: u64 = 0;
@@ -21,26 +16,26 @@ module shieldclaw::governance {
     const E_NOT_OWNER: u64 = 6;
 
     /// Governance configuration
-    struct Governance has key {
+    public struct Governance has key {
         id: UID,
         admin: address,
         governors: vector<address>,
-        quorum_threshold: u64,  // Percentage (0-100) required for quorum
-        voting_period: u64,    // Voting period in epochs
-        timelock: u64,         // Delay before execution (epochs)
+        quorum_threshold: u64,
+        voting_period: u64,
+        timelock: u64,
         proposal_count: u64
     }
 
     /// Proposal for governance changes
-    struct Proposal has key, store {
+    public struct Proposal has key, store {
         id: UID,
         proposal_id: u64,
         proposer: address,
         title: String,
         description: String,
-        proposal_type: u8,     // 1: Policy, 2: Config, 3: Admin, 4: Custom
-        target_address: address,  // For admin/proposal changes
-        action_data: vector<u8>,  // Encoded action data
+        proposal_type: u8,
+        target_address: address,
+        action_data: vector<u8>,
         created_epoch: u64,
         voting_deadline: u64,
         executable_epoch: u64,
@@ -51,23 +46,24 @@ module shieldclaw::governance {
     }
 
     /// Vote record
-    struct Vote has key, store {
+    public struct Vote has key, store {
         id: UID,
         proposal_id: u64,
         voter: address,
-        vote: bool,            // true = for, false = against
+        vote: bool,
         timestamp: u64
     }
 
     /// Security policy
-    struct SecurityPolicy has key, store {
+    public struct SecurityPolicy has key, store {
         id: UID,
         policy_name: String,
         policy_version: String,
-        rules: vector<u8>,      // Encoded policy rules
+        rules: vector<u8>,
         created_epoch: u64,
         updated_epoch: u64,
-        active: bool
+        active: bool,
+        owner: address
     }
 
     /// Initialize governance
@@ -83,9 +79,9 @@ module shieldclaw::governance {
             id: object::new(ctx),
             admin: initial_admin,
             governors: initial_governors,
-            quorum_threshold: quorum_threshold,
-            voting_period: voting_period,
-            timelock: timelock,
+            quorum_threshold,
+            voting_period,
+            timelock,
             proposal_count: 0
         };
         transfer::transfer(governance, tx_context::sender(ctx));
@@ -102,8 +98,6 @@ module shieldclaw::governance {
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
-        
-        // Check if sender is governor
         assert!(vector::contains(&governance.governors, &sender) || sender == governance.admin, E_NOT_GOVERNOR);
 
         governance.proposal_count = governance.proposal_count + 1;
@@ -139,30 +133,21 @@ module shieldclaw::governance {
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
-        
-        // Check if sender is governor
         assert!(vector::contains(&governance.governors, &sender) || sender == governance.admin, E_NOT_GOVERNOR);
-        
-        // Check if already voted
         assert!(!vector::contains(&proposal.voters, &sender), E_ALREADY_VOTED);
-        
-        // Check if proposal is still active
+
         let current_epoch = tx_context::epoch(ctx);
         assert!(current_epoch < proposal.voting_deadline, E_PROPOSAL_EXPIRED);
-        
-        // Check if proposal is not executed
         assert!(!proposal.executed, E_PROPOSAL_EXPIRED);
 
-        // Record vote
         if (vote) {
             proposal.votes_for = proposal.votes_for + 1;
         } else {
             proposal.votes_against = proposal.votes_against + 1;
         };
-        
+
         vector::push_back(&mut proposal.voters, sender);
 
-        // Create vote record
         let vote_record = Vote {
             id: object::new(ctx),
             proposal_id: proposal.proposal_id,
@@ -180,17 +165,11 @@ module shieldclaw::governance {
         proposal: &mut Proposal,
         ctx: &mut TxContext
     ) {
-        // Check if voting period ended
         let current_epoch = tx_context::epoch(ctx);
         assert!(current_epoch >= proposal.voting_deadline, E_PROPOSAL_EXPIRED);
-        
-        // Check if timelock passed
         assert!(current_epoch >= proposal.executable_epoch, E_PROPOSAL_EXPIRED);
-        
-        // Check if not already executed
         assert!(!proposal.executed, E_PROPOSAL_EXPIRED);
-        
-        // Check quorum
+
         let total_governors = if (tx_context::sender(ctx) == governance.admin) {
             vector::length(&governance.governors) + 1
         } else {
@@ -199,28 +178,9 @@ module shieldclaw::governance {
         let votes_cast = vector::length(&proposal.voters);
         let quorum_required = (total_governors * governance.quorum_threshold) / 100;
         assert!(votes_cast >= quorum_required, E_QUORUM_NOT_MET);
-        
-        // Check if passed (more votes for than against)
         assert!(proposal.votes_for > proposal.votes_against, E_INVALID_VOTE);
 
-        // Execute based on proposal type
-        execute_proposal_action(governance, proposal);
-
         proposal.executed = true;
-    }
-
-    /// Execute proposal action
-    fun execute_proposal_action(governance: &Governance, proposal: &Proposal) {
-        // In a real implementation, this would execute different actions
-        // based on proposal_type and action_data
-        // For example:
-        // - Type 1: Update security policy
-        // - Type 2: Update configuration
-        // - Type 3: Add/remove admin or governor
-        // - Type 4: Custom action
-        
-        // This is a placeholder - actual implementation would dispatch
-        // to appropriate functions
     }
 
     /// Add governor (admin only)
@@ -231,7 +191,6 @@ module shieldclaw::governance {
     ) {
         assert!(tx_context::sender(ctx) == governance.admin, E_NOT_ADMIN);
         assert!(!vector::contains(&governance.governors, &new_governor), E_INVALID_VOTE);
-        
         vector::push_back(&mut governance.governors, new_governor);
     }
 
@@ -242,9 +201,9 @@ module shieldclaw::governance {
         ctx: &mut TxContext
     ) {
         assert!(tx_context::sender(ctx) == governance.admin, E_NOT_ADMIN);
-        
+
         let len = vector::length(&governance.governors);
-        let i = 0;
+        let mut i = 0;
         while (i < len) {
             if (*vector::borrow(&governance.governors, i) == governor) {
                 vector::remove(&mut governance.governors, i);
@@ -254,7 +213,7 @@ module shieldclaw::governance {
         };
     }
 
-    /// Update admin (proposal type 3)
+    /// Update admin (admin only)
     public entry fun update_admin(
         governance: &mut Governance,
         new_admin: address,
@@ -272,6 +231,7 @@ module shieldclaw::governance {
         ctx: &mut TxContext
     ) {
         let current_epoch = tx_context::epoch(ctx);
+        let sender = tx_context::sender(ctx);
         let policy = SecurityPolicy {
             id: object::new(ctx),
             policy_name,
@@ -279,20 +239,20 @@ module shieldclaw::governance {
             rules,
             created_epoch: current_epoch,
             updated_epoch: current_epoch,
-            active: true
+            active: true,
+            owner: sender
         };
-        transfer::transfer(policy, tx_context::sender(ctx));
+        transfer::transfer(policy, sender);
     }
 
-    /// Update security policy
+    /// Update security policy (owner only)
     public entry fun update_policy(
         policy: &mut SecurityPolicy,
         new_rules: vector<u8>,
         new_version: String,
         ctx: &mut TxContext
     ) {
-        assert!(tx_context::sender(ctx) == object::owner(policy), E_NOT_OWNER);
-        
+        assert!(tx_context::sender(ctx) == policy.owner, E_NOT_OWNER);
         policy.rules = new_rules;
         policy.policy_version = new_version;
         policy.updated_epoch = tx_context::epoch(ctx);
@@ -311,11 +271,11 @@ module shieldclaw::governance {
 
     /// Get proposal status
     public fun get_proposal_status(proposal: &Proposal): (bool, u64, u64, u64) {
-        let current_epoch = proposal.created_epoch + proposal.voting_period;
-        let can_execute = current_epoch >= proposal.voting_deadline && 
-                          current_epoch >= proposal.executable_epoch &&
-                          !proposal.executed;
-        
-        (can_execute, proposal.votes_for, proposal.votes_against, proposal.voting_deadline)
+        (
+            !proposal.executed && proposal.votes_for > proposal.votes_against,
+            proposal.votes_for,
+            proposal.votes_against,
+            proposal.voting_deadline
+        )
     }
 }

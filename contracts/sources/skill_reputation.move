@@ -2,14 +2,9 @@
 /// Manages reputation scores for AI skills on ShieldClaw
 /// Allows tracking skill performance, security incidents, and community trust
 
+#[allow(duplicate_alias, unused_use, lint(public_entry))]
 module shieldclaw::skill_reputation {
-    use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
-    use sui::balance::{Self, Balance};
-    use sui::sui::SUI;
-    use std::string::{Self, String};
-    use std::vector;
+    use std::string::String;
 
     /// Error codes
     const E_NOT_ADMIN: u64 = 0;
@@ -18,10 +13,10 @@ module shieldclaw::skill_reputation {
     const E_INVALID_INCIDENT: u64 = 3;
 
     /// Skill reputation record
-    struct SkillReputation has key, store {
+    public struct SkillReputation has key, store {
         id: UID,
         skill_name: String,
-        score: u64,              // 0-100 reputation score
+        score: u64,
         total_executions: u64,
         successful_executions: u64,
         failed_executions: u64,
@@ -31,22 +26,22 @@ module shieldclaw::skill_reputation {
     }
 
     /// Reputation registry (singleton)
-    struct ReputationRegistry has key {
+    public struct ReputationRegistry has key {
         id: UID,
         admin: address,
-        skills: vector<String>  // List of registered skill names
+        skills: vector<String>
     }
 
     /// Security incident record
-    struct SecurityIncident has key, store {
+    public struct SecurityIncident has key, store {
         id: UID,
         skill_name: String,
         incident_type: String,
-        severity: u8,           // 1-5 severity level
+        severity: u8,
         description: String,
         timestamp: u64,
         reporter: address,
-        evidence: vector<u8>    // Encrypted evidence (hash of Walrus blob)
+        evidence: vector<u8>
     }
 
     /// Initialize the reputation registry
@@ -68,11 +63,8 @@ module shieldclaw::skill_reputation {
     ) {
         assert!(tx_context::sender(ctx) == registry.admin, E_NOT_ADMIN);
         assert!(initial_score <= 100, E_INVALID_REPUTATION);
-
-        // Check if skill already exists
         assert!(!vector::contains(&registry.skills, &skill_name), E_SKILL_NOT_FOUND);
 
-        // Create reputation record
         let reputation = SkillReputation {
             id: object::new(ctx),
             skill_name: skill_name,
@@ -85,10 +77,7 @@ module shieldclaw::skill_reputation {
             admin: tx_context::sender(ctx)
         };
 
-        // Add to registry
         vector::push_back(&mut registry.skills, skill_name);
-
-        // Transfer to admin
         transfer::transfer(reputation, tx_context::sender(ctx));
     }
 
@@ -101,10 +90,9 @@ module shieldclaw::skill_reputation {
         reputation.successful_executions = reputation.successful_executions + 1;
         reputation.last_updated = tx_context::epoch(ctx);
 
-        // Slightly increase reputation score
         if (reputation.score < 100) {
             reputation.score = reputation.score + 1;
-        }
+        };
     }
 
     /// Record a failed execution
@@ -116,10 +104,11 @@ module shieldclaw::skill_reputation {
         reputation.failed_executions = reputation.failed_executions + 1;
         reputation.last_updated = tx_context::epoch(ctx);
 
-        // Decrease reputation score (more penalty for failures)
-        if (reputation.score > 0) {
+        if (reputation.score >= 2) {
             reputation.score = reputation.score - 2;
-        }
+        } else {
+            reputation.score = 0;
+        };
     }
 
     /// Record a security incident
@@ -136,15 +125,13 @@ module shieldclaw::skill_reputation {
         reputation.security_incidents = reputation.security_incidents + 1;
         reputation.last_updated = tx_context::epoch(ctx);
 
-        // Penalize based on severity
-        let penalty = (severity as u64) * 10; // 10-50 points
+        let penalty = (severity as u64) * 10;
         if (reputation.score >= penalty) {
             reputation.score = reputation.score - penalty;
         } else {
             reputation.score = 0;
-        }
+        };
 
-        // Create incident record
         let incident = SecurityIncident {
             id: object::new(ctx),
             skill_name: reputation.skill_name,
@@ -156,7 +143,6 @@ module shieldclaw::skill_reputation {
             evidence
         };
 
-        // Transfer to reporter
         transfer::transfer(incident, tx_context::sender(ctx));
     }
 

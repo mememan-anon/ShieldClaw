@@ -1,0 +1,12 @@
+[package]
+name = "ShieldClaw"
+version = "0.1.0"
+edition = "2024.beta"
+
+[dependencies]
+
+[addresses]
+shieldclaw = "0x0"
+
+[environments]
+devnet = "01accae1"

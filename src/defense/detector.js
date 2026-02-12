@@ -12,7 +12,7 @@ export class PromptInjectionDetector {
     
     // Detection configuration
     this.strictMode = options.strictMode || false;
-    this.threshold = options.threshold || 0.5;
+    this.threshold = options.threshold ?? 0.2;
     this.enableHeuristics = options.enableHeuristics !== false;
     this.enableMLDetection = options.enableMLDetection || false;
     
@@ -111,7 +111,7 @@ export class PromptInjectionDetector {
           matches: matches.slice(0, 5), // Limit to 5 matches
           severity: this.getPatternSeverity(pattern)
         });
-        result.score += 0.15;
+        result.score += 0.25;
       }
     }
 
@@ -126,7 +126,7 @@ export class PromptInjectionDetector {
           matches: matches.slice(0, 5),
           severity: pattern.severity || 'medium'
         });
-        result.score += 0.2;
+        result.score += 0.3;
       }
     }
 
@@ -260,6 +260,8 @@ export class PromptInjectionDetector {
       return 'high';
     } else if (patternStr.includes('exec') || patternStr.includes('eval')) {
       return 'high';
+    } else if (patternStr.includes('password') || patternStr.includes('secret') || patternStr.includes('credential') || patternStr.includes('exfiltrate')) {
+      return 'high';
     } else if (patternStr.includes('role') || patternStr.includes('act as') || patternStr.includes('pretend')) {
       return 'medium';
     } else {
@@ -326,6 +328,23 @@ export class PromptInjectionDetector {
         type: 'role_play',
         severity: 'medium',
         description: 'Role-playing attempt detected'
+      });
+    }
+
+    // Check for data exfiltration
+    const hasExfiltration = result.patterns.some(p =>
+      p.pattern.includes('password') ||
+      p.pattern.includes('secret') ||
+      p.pattern.includes('token') ||
+      p.pattern.includes('key') ||
+      p.pattern.includes('credential') ||
+      p.pattern.includes('env')
+    );
+    if (hasExfiltration) {
+      risks.push({
+        type: 'data_exfiltration',
+        severity: 'high',
+        description: 'Attempt to extract sensitive data (passwords, keys, secrets)'
       });
     }
 

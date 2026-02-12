@@ -36,3 +36,4 @@ temp/
 *.pid
 *.seed
 *.pid.lock
+.claude

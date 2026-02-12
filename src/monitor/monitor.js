@@ -108,8 +108,14 @@ export class BehaviorMonitor extends EventEmitter {
     
     for (let i = 0; i < baselineSamples; i++) {
       const metrics = await this.collectMetrics();
-      samples.push(metrics);
+      if (metrics) samples.push(metrics);
       await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    if (samples.length === 0) {
+      this.logger.warn('No valid samples collected, using zero baseline');
+      this.baseline = { cpu: 0, memory: 0, networkIn: 0, networkOut: 0, diskRead: 0, diskWrite: 0, syscalls: 0, variance: { cpu: 0, memory: 0 } };
+      return this.baseline;
     }
     
     this.baseline = this.calculateBaseline(samples);
@@ -158,10 +164,10 @@ export class BehaviorMonitor extends EventEmitter {
       
       // System-level metrics
       const [networkStats, diskStats] = await Promise.all([
-        si.networkStats(),
-        si.fsStats()
+        si.networkStats().catch(() => null),
+        si.fsStats().catch(() => null)
       ]);
-      
+
       // Syscall count (Linux-specific)
       let syscalls = 0;
       try {
@@ -173,19 +179,19 @@ export class BehaviorMonitor extends EventEmitter {
       } catch (err) {
         syscalls = 0;
       }
-      
+
       return {
         timestamp: Date.now(),
         pid: this.pid,
         cpu: procStats.cpu,
         memory: (procStats.memory / 1024 / 1024 / 1024) * 100, // Convert to GB %
         network: {
-          in: networkStats[0]?.rx_sec || 0,
-          out: networkStats[0]?.tx_sec || 0
+          in: networkStats?.[0]?.rx_sec || 0,
+          out: networkStats?.[0]?.tx_sec || 0
         },
         disk: {
-          read: diskStats.rx || 0,
-          write: diskStats.wx || 0
+          read: diskStats?.rx || 0,
+          write: diskStats?.wx || 0
         },
         syscalls: syscalls
       };

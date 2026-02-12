@@ -125,7 +125,7 @@ async function runDetectorDemo() {
   console.log('Testing detection system with various inputs...\n');
   
   const detector = createDefaultDetector({
-    threshold: 0.5,
+    threshold: 0.2,
     enableHeuristics: true,
     strictMode: false
   });
@@ -228,7 +228,8 @@ async function runDefenseDemo() {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { pathToFileURL } from 'url';
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   runDefenseDemo().catch(error => {
     console.error('Fatal error:', error);
     process.exit(1);

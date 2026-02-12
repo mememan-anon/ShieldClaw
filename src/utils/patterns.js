@@ -36,8 +36,9 @@ export const PROMPT_INJECTION_PATTERNS = [
   /os\.system|subprocess\.|Popen\(/gi,
   
   // Data exfiltration attempts
-  /(?:print|output|show|display|return|expose)\s+(?:all|the\s+)?(?:passwords?|keys?|tokens?|secrets?)/gi,
-  /(?:reveal|leak|dump)\s+(?:internal|system|admin)/gi,
+  /(?:print|output|show|display|return|expose|give|list|tell|extract|read)\s+.*?(?:passwords?|api\s*keys?|tokens?|secrets?|credentials?|\.env)/gi,
+  /(?:reveal|leak|dump|exfiltrate|steal)\s+.*?(?:internal|system|admin|private|sensitive|confidential)/gi,
+  /(?:environment\s+variables?|env\s+vars?|\.env\s+file)/gi,
 ];
 
 /**

@@ -1,326 +1,143 @@
-# ShieldClaw - AI Agent Security Framework
+# ShieldClaw
 
-**Status:** ✅ Complete — all modules implemented and tests passing (42/42)
+**AI Agent Security Framework with Sui Blockchain Integration**
 
-ShieldClaw is a comprehensive security framework for autonomous AI agents providing runtime monitoring, skill verification, isolated execution, prompt injection defense, and Sui integration. The test suite (unit + integration) passes and demos have been validated.
-
-## 🎯 Mission
-
-Secure autonomous AI agents by implementing defense-in-depth security across multiple layers:
-
-## 📊 Current Status
-
-**Implementation:** ✅ Complete — all 8 modules implemented and verified
-- ✅ All 8 core modules implemented
-- ✅ 4 Sui Move contracts implemented
-- ✅ 3 validated demos (monitor, executor, injection)
-- ✅ Test suite: unit + integration tests passing (42/42)
-
-**See:** [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md) for detailed status
-**See:** [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) for verification results
+Built for the **Calling All Agents Hackathon** — Track 1: Safety & Security
 
 ---
-- **Runtime behavior monitoring** - Detect anomalous agent behavior
-- **Skill verification system** - Verify code integrity and permissions
-- **Isolated executor environment** - Sandboxed execution with eBPF monitoring
-- **Prompt injection defense** - Detect and mitigate prompt injection attacks
-- **Sui blockchain integration** - Immutable security event logging and reputation system
-- **OpenClaw integration** - Seamless monitoring and control hooks
 
-## 🏗️ Architecture
+## Overview
+
+ShieldClaw is a defense-in-depth security framework for autonomous AI agents. It protects agents at every layer — from prompt injection attacks at the input, through runtime behavior anomalies, to immutable audit logging on the Sui blockchain.
+
+- **Prompt Injection Defense** — Pattern-based + heuristic + LLM detection of injection attacks
+- **Skill Verification** — SHA-256 hashing, permission enforcement, and security pattern scanning
+- **Runtime Behavior Monitor** — CPU, memory, network tracking with anomaly detection
+- **Sui Blockchain Logging** — Detected threats are automatically logged on-chain with explorer links
+- **Container Executor** — Sandboxed Docker execution with seccomp syscall filtering and resource limits
+- **OpenClaw Integration** — Agent gateway registration, pre/post execution hooks, and output leak scanning
+- **Live Dashboard** — React frontend with real-time event stream and interactive demos
+
+## How It Connects to OpenClaw & AI Agents
+
+AI agents execute **skills** — arbitrary code or actions on behalf of a user. ShieldClaw wraps every step of that execution:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      AGENT CONTAINER                          │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  PROMPT INJECTION DEFENSE LAYER                         │   │
-│  │  • Input sanitization                                    │   │
-│  │  • Pattern detection                                     │   │
-│  │  • LLM-based analysis                                    │   │
-│  └───────────────────────┬─────────────────────────────────┘   │
-│                          │                                     │
-│  ┌───────────────────────▼─────────────────────────────────┐   │
-│  │  RUNTIME BEHAVIOR MONITOR                              │   │
-│  │  • System call monitoring (eBPF)                       │   │
-│  │  • Resource usage tracking                              │   │
-│  │  • Behavioral pattern analysis                          │   │
-│  │  • Anomaly detection                                    │   │
-│  └───────────────────────┬─────────────────────────────────┘   │
-│                          │                                     │
-│  ┌───────────────────────▼─────────────────────────────────┐   │
-│  │  SKILL VERIFICATION SYSTEM                              │   │
-│  │  • Code integrity verification                           │   │
-│  │  • Permission checks                                     │   │
-│  │  • Signature validation                                 │   │
-│  │  • Reputation scoring                                    │   │
-│  └───────────────────────┬─────────────────────────────────┘   │
-│                          │                                     │
-│  ┌───────────────────────▼─────────────────────────────────┐   │
-│  │  ISOLATED EXECUTOR ENVIRONMENT                         │   │
-│  │  • Container sandbox (Docker/Podman)                    │   │
-│  │  • Network isolation                                    │   │
-│  │  • File system restrictions                             │   │
-│  │  • Resource limits                                      │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      OPENCLAW API HOOKS                         │
-│  • Pre-execution security checks                                │
-│  • Real-time monitoring streams                                 │
-│  • Emergency shutdown capabilities                             │
-│  • Event logging integration                                    │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       SUI BLOCKCHAIN                           │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Skill Reputation Registry                               │   │
-│  │  • Skill reputation scores                              │   │
-│  │  • Developer trust levels                               │   │
-│  │  • Verification records                                  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Security Event Log                                      │   │
-│  │  • Immutable event records                               │   │
-│  │  • Tamper-evident audit trail                            │   │
-│  │  • Cryptographic verification                            │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Governance Module                                        │   │
-│  │  • Policy management                                      │   │
-│  │  • Voting mechanisms                                     │   │
-│  │  • Permission updates                                    │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+User prompt --> Prompt Injection Check (pattern + heuristic + LLM)
+            --> Pre-execution Hook (verify skill, check permissions)
+            --> Agent executes skill (ShieldClaw monitors runtime)
+            --> Post-execution Hook (scan output for leaked secrets)
+            --> Any threat detected --> logged to Sui blockchain
 ```
 
-## 📦 Components
+The `src/openclaw/` module provides an **OpenClawClient** that registers ShieldClaw as a security agent in the gateway, **ExecutionHooks** that can deny suspicious executions and scan output for leaked credentials, and **SecurityHooks** with built-in presets for resource limit enforcement.
 
-### 1. Runtime Behavior Monitor (`src/monitor/`)
-- eBPF-based system call monitoring
-- Resource usage tracking (CPU, memory, network, disk I/O)
-- Behavioral pattern analysis
-- Anomaly detection with ML models
-- Real-time alerting
+## Security Modules
 
-### 2. Skill Verification System (`src/verify/`)
-- Code integrity verification (hash comparison)
-- Signature validation
-- Permission checking against policy
-- Reputation scoring integration
-- Pre-execution security checks
+| Module | What It Does | Location |
+|--------|-------------|----------|
+| **Prompt Injection Defense** | Detects instruction overrides, jailbreaks, role-play manipulation, data exfiltration, and code injection using regex patterns, heuristic analysis (repetition, encoding, case distribution), and optional OpenAI GPT-4o-mini classification. | `src/defense/` |
+| **Skill Verifier** | Scans agent skill code for dangerous patterns (`eval`, `child_process`, `fs.readFile`), enforces file/network/exec permissions, and generates SHA-256 integrity hashes. | `src/verify/` |
+| **Behavior Monitor** | Tracks CPU, memory, network I/O, and disk usage in real time. Establishes a baseline and fires alerts when metrics deviate beyond configurable thresholds. | `src/monitor/` |
+| **Sui Blockchain Client** | Logs security events, creates skill attestations, and queries on-chain records via the `@mysten/sui` SDK. 4 Move contracts deployed to devnet (events, reputation, verification, governance). | `src/blockchain/` |
+| **Container Executor** | Wraps Docker (via `dockerode`) to run agent skills in isolated containers with CPU/memory limits and seccomp syscall filtering profiles (`default`, `strict`, `network-only`). | `src/container/`, `src/executor/` |
+| **OpenClaw Integration** | Registers ShieldClaw as a security agent in the OpenClaw gateway. Pre-execution hooks can block suspicious skills. Post-execution hooks scan output for leaked passwords, API keys, and tokens. | `src/openclaw/` |
 
-### 3. Isolated Executor Environment (`src/executor/`)
-- Container sandbox management (Docker/Podman)
-- Network isolation configuration
-- File system restrictions (read-only paths, temporary directories)
-- Resource limits (CPU, memory, disk)
-- Seccomp profiles for syscall filtering
+## Architecture
 
-### 4. Prompt Injection Defense (`src/defense/`)
-- Input sanitization and validation
-- Pattern-based detection (known injection vectors)
-- LLM-based analysis (analyze intent and detect manipulation)
-- Output filtering
-- Context isolation
+Single monolith — one `npm start`, one port, one URL.
 
-### 5. OpenClaw API Integration (`src/openclaw/`)
-- Pre-execution hooks
-- Post-execution callbacks
-- Real-time monitoring streams
-- Emergency control interfaces
-- Event logging integration
+```
+http://localhost:3991
+    +--- Static Files (React frontend built by Vite)
+    +--- /api/* (Express API routes)
+            +---> Prompt Injection Defense
+            +---> Skill Verifier
+            +---> Behavior Monitor
+            +---> OpenClaw Integration
+            +---> Sui Blockchain Client (@mysten/sui SDK)
+                        |
+                        v
+                Sui Devnet (4 Move Contracts)
+```
 
-### 6. Sui Move Contracts (`contracts/`)
-- Skill Reputation Registry
-- Security Event Log
-- Governance Module
-- Verifiable Compute
+## Tech Stack
 
-### 7. Containerization & eBPF (`src/container/`)
-- Container management utilities
-- eBPF program loading and monitoring
-- Syscall filtering profiles
-- Network traffic inspection
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Vite 7, Tailwind CSS 4 |
+| Backend | Express.js, Node.js 18+ |
+| Blockchain | Sui Move, `@mysten/sui` SDK |
+| LLM Analysis | OpenAI GPT-4o-mini (optional) |
+| Monitoring | `pidusage` + `systeminformation`, SSE |
 
-## 🚀 Quick Start
+## Deployed Contracts (Sui Devnet)
 
-### Installation
+| Contract | Object ID |
+|----------|-----------|
+| Package | [`0x5921...4dcf`](https://suiscan.xyz/devnet/object/0x5921b2d8e7a8da8d84dda83682fadf130cf7195691109020bcad5e9983f94dcf) |
+| EventLog | `0xbf6f...387f` |
+| ReputationRegistry | `0xc87c...3f3a` |
+| CertificateRegistry | `0x8b55...0b60` |
+
+---
+
+## Getting Started
+
+**Prerequisites:** Node.js >= 18
+
+### 1. Install
 
 ```bash
-# Clone repository
 git clone <repository-url>
-cd shieldclaw
-
-# Install Node.js dependencies
+cd ShieldClaw
 npm install
-
-# Install Sui Move dependencies
-sui client publish --package-url contracts
-
-# Build eBPF programs
-cd src/container/ebpf
-make
+cd frontend && npm install && cd ..
 ```
 
-### Configuration
+### 2. Configure environment
+
+Create a `.env` in the project root:
+
+```env
+# Sui Blockchain (required for on-chain logging)
+SUI_NETWORK=devnet
+SUI_PACKAGE_ID=<your-deployed-package-id>
+SUI_REGISTRY_ID=<your-registry-object-id>
+SUI_EVENT_LOG_ID=<your-event-log-object-id>
+SUI_CERT_REGISTRY_ID=<your-cert-registry-object-id>
+SUI_PRIVATE_KEY=<your-sui-private-key>
+
+# OpenAI (optional — enables LLM-based prompt injection analysis)
+OPENAI_API_KEY=<your-openai-api-key>
+```
+
+> Already-deployed contracts? The `.env` is pre-configured.
+
+### 3. Run
 
 ```bash
-# Copy example configuration
-cp config/config.example.json config/config.json
-
-# Edit configuration
-nano config/config.json
+npm start
 ```
 
-### Run Basic Monitor
+Opens on **http://localhost:3991** — frontend + API on a single port.
+
+### 4. Deploy to Vercel
 
 ```bash
-# Start runtime behavior monitor
-npm run monitor:start
-
-# Run skill verification check
-npm run verify:skill <skill-path>
-
-# Launch isolated executor
-npm run executor:run <skill-name> --args <args>
-
-# Test prompt injection defense
-npm run defense:test --input "test input"
+npm i -g vercel && vercel
 ```
 
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run unit tests
-npm run test:unit
-
-# Run integration tests
-npm run test:integration
-
-# Run eBPF tests (requires root)
-sudo npm run test:ebpf
-
-# Run demo scenarios
-npm run demo:malicious
-npm run demo:injection
-npm run demo:secure
-```
-
-## 📊 Demo Scenarios
-
-### 1. Malicious Skill Detection
-Simulates execution of a skill with malicious intent:
-- Detects suspicious file access patterns
-- Flags unauthorized network connections
-- Blocks dangerous system calls
-- Logs security event to Sui blockchain
-
-### 2. Prompt Injection Mitigation
-Tests prompt injection attack vectors:
-- Role-playing attempts
-- Direct instruction overrides
-- Context manipulation
-- Confusing objectives
-
-### 3. Secure Command Execution
-Demonstrates isolated execution:
-- Sandboxed command execution
-- Resource limit enforcement
-- eBPF syscall monitoring
-- Clean shutdown
-
-## 🔐 Security Features
-
-### Defense in Depth
-- **Layer 1:** Prompt injection defense
-- **Layer 2:** Runtime behavior monitoring
-- **Layer 3:** Skill verification
-- **Layer 4:** Isolated execution environment
-- **Layer 5:** Blockchain-verified audit trail
-
-### Immutable Audit Trail
-All security events are logged to Sui blockchain:
-- Cryptographically tamper-evident
-- Immutable storage
-- Verifiable by anyone
-- Reputation tracking
-
-### Real-time Response
-- Instant detection of anomalies
-- Automatic threat containment
-- Emergency shutdown capability
-- Alert notifications
-
-## 📝 Development Plan
-
-### Phase 1: Core Infrastructure (Week 1) ✅ COMPLETE
-- [x] Project setup and structure
-- [x] Runtime behavior monitor
-- [x] Skill verification system
-- [x] Basic eBPF monitoring
-
-### Phase 2: Isolation & Defense (Week 2) ✅ COMPLETE
-- [x] Isolated executor environment
-- [x] Prompt injection defense
-- [x] Container orchestration
-- [x] eBPF syscall filtering
-
-### Phase 3: Blockchain Integration (Week 3) ✅ COMPLETE
-- [x] Sui Move contracts
-- [x] Reputation registry
-- [x] Security event logging
-- [x] Governance module
-
-### Phase 4: OpenClaw Integration (Week 4) ✅ COMPLETE
-- [x] API hooks implementation
-- [x] Real-time monitoring
-- [x] Control interfaces
-- [x] Event synchronization
-
-### Phase 5: Testing & Demos (Week 5) ✅ COMPLETE
-- [x] Unit tests (32 unit tests passing)
-- [x] Integration tests (10 integration tests passing)
-- [x] Demo scenarios (3 validated demos: monitor, executor, injection)
-- [x] Documentation (complete)
-
-**Overall Progress: 100% Complete**
-
-## 🛠️ Technology Stack
-
-- **Runtime:** Node.js 22+
-- **Monitoring:** eBPF (bcc, libbpf)
-- **Containerization:** Docker/Podman
-- **Blockchain:** Sui Move
-- **AI/ML:** OpenAI API for prompt analysis
-- **Testing:** Jest, Mocha
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📞 Support
-
-For issues or questions:
-- Open an issue on GitHub
-- Check existing documentation
-- Review demo scenarios
+Add your `SUI_*` and `OPENAI_API_KEY` env vars in the Vercel dashboard. One URL, everything works.
 
 ---
 
-**Built for the Autonomous Agents Security Hackathon** 🛡️
+## Testing
+
+```bash
+npm test    # 42/42 tests passing (32 unit + 10 integration)
+```
+
+## License
+
+MIT

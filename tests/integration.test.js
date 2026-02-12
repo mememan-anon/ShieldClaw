@@ -351,7 +351,8 @@ runner.add('Skill verification should check reputation', async () => {
 });
 
 // ============== Run Tests ==============
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { pathToFileURL } from 'url';
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   runner.run().then(success => {
     process.exit(success ? 0 : 1);
   }).catch(error => {

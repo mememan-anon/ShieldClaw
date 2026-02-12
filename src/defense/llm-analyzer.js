@@ -4,6 +4,7 @@
  */
 
 import OpenAI from 'openai';
+import { createHash } from 'crypto';
 import { createLogger } from '../utils/logger.js';
 
 export class LLMAnalyzer {
@@ -12,7 +13,7 @@ export class LLMAnalyzer {
     
     // OpenAI configuration
     this.apiKey = options.openaiApiKey || process.env.OPENAI_API_KEY;
-    this.model = options.model || 'gpt-4';
+    this.model = options.model || 'gpt-4o-mini';
     this.maxTokens = options.maxTokens || 500;
     this.temperature = options.temperature || 0.1;  // Low temperature for consistent analysis
     
@@ -125,19 +126,31 @@ Context: ${JSON.stringify({
 })}`;
 
     try {
-      const response = await this.client.chat.completions.create({
+      const params = {
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         max_tokens: this.maxTokens,
-        temperature: this.temperature,
-        response_format: { type: 'json_object' }
-      });
+        temperature: this.temperature
+      };
+
+      let response;
+      try {
+        response = await this.client.chat.completions.create({
+          ...params,
+          response_format: { type: 'json_object' }
+        });
+      } catch (fmtErr) {
+        // Fallback: model may not support response_format
+        response = await this.client.chat.completions.create(params);
+      }
 
       const content = response.choices[0].message.content;
-      const analysis = JSON.parse(content);
+      // Extract JSON from response (may be wrapped in markdown code fences)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const analysis = JSON.parse(jsonMatch ? jsonMatch[0] : content);
 
       // Validate response structure
       return {
@@ -264,7 +277,7 @@ Return ONLY the rewritten input, no additional text or explanation.`;
    */
   generateCacheKey(input, context) {
     const data = JSON.stringify({ input, context });
-    return require('crypto').createHash('md5').update(data).digest('hex');
+    return createHash('md5').update(data).digest('hex');
   }
 
   /**

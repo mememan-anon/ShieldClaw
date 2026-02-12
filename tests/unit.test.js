@@ -297,7 +297,8 @@ runner.add('getProfileStats() should return statistics', () => {
 });
 
 // ============== Run Tests ==============
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { pathToFileURL } from 'url';
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   runner.run().then(success => {
     process.exit(success ? 0 : 1);
   }).catch(error => {
