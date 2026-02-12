@@ -15,7 +15,21 @@ export default function MonitorChart({ health }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">Runtime Monitor</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-white">Behavior Monitor</h3>
+          <div className="relative group">
+            <button
+              type="button"
+              className="w-5 h-5 rounded-full border border-gray-600 text-gray-400 text-xs font-semibold hover:text-gray-200 hover:border-gray-500 transition-colors"
+              aria-label="Runtime monitor limitations"
+            >
+              i
+            </button>
+            <div className="absolute left-0 top-7 w-72 bg-gray-950 border border-gray-700 rounded-md px-3 py-2 text-xs text-gray-300 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-20">
+              Behavior monitoring is limited on serverless deployments like Vercel. Run ShieldClaw locally for full CPU, memory, and network monitoring.
+            </div>
+          </div>
+        </div>
         <button onClick={handleToggle}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
             running

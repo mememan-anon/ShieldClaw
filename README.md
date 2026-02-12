@@ -8,11 +8,11 @@ Built for the **Calling All Agents Hackathon** — Track 1: Safety & Security
 
 ## Overview
 
-ShieldClaw is a defense-in-depth security framework for autonomous AI agents. It protects agents at every layer — from prompt injection attacks at the input, through runtime behavior anomalies, to immutable audit logging on the Sui blockchain.
+ShieldClaw is a defense-in-depth security framework for autonomous AI agents. It protects agents at every layer — from prompt injection attacks at the input, through behavior anomalies during execution, to immutable audit logging on the Sui blockchain.
 
 - **Prompt Injection Defense** — Pattern-based + heuristic + LLM detection of injection attacks
 - **Skill Verification** — SHA-256 hashing, permission enforcement, and security pattern scanning
-- **Runtime Behavior Monitor** — CPU, memory, network tracking with anomaly detection
+- **Behavior Monitor** — CPU, memory, network tracking with anomaly detection
 - **Sui Blockchain Logging** — Detected threats are automatically logged on-chain with explorer links
 - **Container Executor** — Sandboxed Docker execution with seccomp syscall filtering and resource limits
 - **OpenClaw Integration** — Agent gateway registration, pre/post execution hooks, and output leak scanning
@@ -25,7 +25,7 @@ AI agents execute **skills** — arbitrary code or actions on behalf of a user. 
 ```
 User prompt --> Prompt Injection Check (pattern + heuristic + LLM)
             --> Pre-execution Hook (verify skill, check permissions)
-            --> Agent executes skill (ShieldClaw monitors runtime)
+            --> Agent executes skill (ShieldClaw monitors behavior)
             --> Post-execution Hook (scan output for leaked secrets)
             --> Any threat detected --> logged to Sui blockchain
 ```
@@ -129,6 +129,8 @@ npm i -g vercel && vercel
 ```
 
 Add your `SUI_*` and `OPENAI_API_KEY` env vars in the Vercel dashboard. One URL, everything works.
+
+> **Behavior Monitor note:** behavior monitoring is limited on serverless deployments like Vercel. For full CPU, memory, and network monitoring, run ShieldClaw locally.
 
 ---
 
