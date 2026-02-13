@@ -76,9 +76,9 @@ http://localhost:3991
 | Contract | Object ID |
 |----------|-----------|
 | Package | [`0x5921...4dcf`](https://suiscan.xyz/devnet/object/0x5921b2d8e7a8da8d84dda83682fadf130cf7195691109020bcad5e9983f94dcf) |
-| EventLog | `0xbf6f...387f` |
-| ReputationRegistry | `0xc87c...3f3a` |
-| CertificateRegistry | `0x8b55...0b60` |
+| EventLog | 0xbf6f837b72b36c6250914093f0616b8eba2d42c460b67a394b43c1960c3b387f |
+| ReputationRegistry | 0xc87ce7701b4bfd106f1850cc261cad58c7d6538b4ac38c58aee9e7a68e103f3a |
+| CertificateRegistry | 0x8b55f589419cce1ab516d13aa42ec2caf0ab2423b18ac7a2e9045e7717af0b60 |
 
 ---
 
